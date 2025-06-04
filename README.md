@@ -162,10 +162,6 @@ This tool generates draft responses using AI. Always review and edit responses b
 - [Google AI Studio](https://aistudio.google.com/)
 - [Gmail App Passwords Help](https://support.google.com/accounts/answer/185833)
 
-## 📊 Screenshots
-
-*Screenshots of the application interface would go here*
-
 ---
 
 **Built with ❤️ using Streamlit and Google Gemini 2.0**
