@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 AI-Powered Email Responder - Streamlit Web App
 Uses Gemini 2.0 to generate response drafts for incoming emails
@@ -177,24 +176,45 @@ Only provide the email response content, without subject line or formatting mark
 def main():
     st.set_page_config(
         page_title="AI Email Responder",
-        page_icon="📧",
+        page_icon="✉️",
         layout="wide",
         initial_sidebar_state="expanded"
     )
     
-    st.title("🤖 AI-Powered Email Responder")
+    st.title("AI-Powered Email Responder")
     st.markdown("Generate professional email responses using Gemini 2.0")
     
     # Sidebar for configuration
     with st.sidebar:
-        st.header("📋 Configuration")
+        st.header("Configuration")
         
         # Email Settings
         st.subheader("Email Settings")
-        st.info("🔒 **Security Note**: Never commit credentials to version control. Use environment variables for production.")
         email_address = st.text_input("Email Address", placeholder="your-email@gmail.com")
-        email_password = st.text_input("Email Password", type="password", 
-                                     help="⚠️ Use app-specific password for Gmail. Never use your main account password.")
+        
+        # App Password Instructions
+        with st.expander("How to get Gmail App Password"):
+            st.markdown("""
+            **For Gmail users, you MUST use an App Password (not your regular password):**
+            
+            1. **Enable 2-Factor Authentication** on your Google account first
+            2. Go to [Google Account Settings](https://myaccount.google.com/)
+            3. Click **Security** in the left sidebar
+            4. Under "How you sign in to Google", click **App passwords**
+            5. Select **Mail** and **Other (custom name)**
+            6. Enter "Email Responder" as the app name
+            7. Google will generate a 16-character password
+            8. Copy and paste that password into the field below
+            
+            **Alternative method:**
+            - Go directly to [App Passwords](https://myaccount.google.com/apppasswords)
+            - Follow steps 5-8 above
+            
+            **Important**: Use the generated 16-character password, not your Gmail password.
+            """)
+        
+        email_password = st.text_input("Email Password / App Password", type="password", 
+                                     help="For Gmail: Use App Password (16 characters). For other providers: Use your email password.")
         
         with st.expander("Advanced Email Settings"):
             imap_server = st.text_input("IMAP Server", value="imap.gmail.com")
@@ -204,9 +224,9 @@ def main():
         
         # AI Settings
         st.subheader("AI Settings")
-        st.info("🔑 **API Key**: Get your free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)")
+        st.info("**API Key**: Get your free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)")
         gemini_api_key = st.text_input("Gemini API Key", type="password",
-                                     help="⚠️ Never commit API keys to version control")
+                                     help="Never commit API keys to version control")
         
         response_tone = st.selectbox("Response Tone", 
                                    ["professional", "friendly", "formal", "casual"])
@@ -218,15 +238,15 @@ def main():
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.header("📧 Email Processing")
+        st.header("Email Processing")
         
         # Validate configuration
         config_valid = all([email_address, email_password, gemini_api_key])
         
         if not config_valid:
-            st.warning("⚠️ Please fill in all required configuration fields in the sidebar.")
+            st.warning("Please fill in all required configuration fields in the sidebar.")
         
-        if st.button("🔍 Fetch and Process Emails", disabled=not config_valid):
+        if st.button("Fetch and Process Emails", disabled=not config_valid):
             config = {
                 'email_address': email_address,
                 'email_password': email_password,
@@ -251,10 +271,10 @@ def main():
                 success, message = responder.connect_to_email()
                 
                 if not success:
-                    st.error(f"❌ {message}")
+                    st.error(f"Connection failed: {message}")
                     st.stop()
                 
-                st.success(f"✅ {message}")
+                st.success(f"Connected successfully: {message}")
                 progress_bar.progress(25)
                 
                 # Fetch emails
@@ -262,11 +282,11 @@ def main():
                 emails, fetch_message = responder.fetch_recent_emails(days_back)
                 
                 if not emails:
-                    st.info(f"📭 {fetch_message}")
+                    st.info(f"No emails found: {fetch_message}")
                     responder.close_connection()
                     st.stop()
                 
-                st.success(f"✅ {fetch_message}")
+                st.success(f"Emails fetched: {fetch_message}")
                 progress_bar.progress(50)
                 
                 # Store emails in session state
@@ -293,23 +313,23 @@ def main():
                     progress = 50 + (50 * (i + 1) / len(emails))
                     progress_bar.progress(int(progress))
                 
-                status_text.text("✅ Processing complete!")
+                status_text.text("Processing complete!")
                 progress_bar.progress(100)
                 
                 # Close connection
                 responder.close_connection()
                 
-                st.success(f"🎉 Successfully processed {len(emails)} emails!")
+                st.success(f"Successfully processed {len(emails)} emails!")
                 
             except Exception as e:
-                st.error(f"❌ An error occurred: {str(e)}")
+                st.error(f"An error occurred: {str(e)}")
                 try:
                     responder.close_connection()
                 except:
                     pass
     
     with col2:
-        st.header("📊 Results")
+        st.header("Results")
         
         if 'responses' in st.session_state and st.session_state.responses:
             st.subheader(f"Generated {len(st.session_state.responses)} responses")
@@ -321,14 +341,14 @@ def main():
                     'Index': i + 1,
                     'From': resp['email']['sender'][:30] + '...' if len(resp['email']['sender']) > 30 else resp['email']['sender'],
                     'Subject': resp['email']['subject'][:40] + '...' if len(resp['email']['subject']) > 40 else resp['email']['subject'],
-                    'Status': '✅ Success' if not resp['error'] else '❌ Error'
+                    'Status': 'Success' if not resp['error'] else 'Error'
                 })
             
             df = pd.DataFrame(summary_data)
             st.dataframe(df, use_container_width=True)
             
             # Download all responses
-            if st.button("📥 Download All Responses"):
+            if st.button("Download All Responses"):
                 # Create a text file with all responses
                 all_responses = ""
                 for i, resp in enumerate(st.session_state.responses):
@@ -354,25 +374,25 @@ Generated on: {resp['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}
 """
                 
                 st.download_button(
-                    label="📄 Download Responses as Text",
+                    label="Download Responses as Text",
                     data=all_responses,
                     file_name=f"email_responses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
                     mime="text/plain"
                 )
         
         else:
-            st.info("👆 Process emails to see results here")
+            st.info("Process emails to see results here")
     
     # Display individual responses
     if 'responses' in st.session_state and st.session_state.responses:
-        st.header("📝 Individual Responses")
+        st.header("Individual Responses")
         
         for i, resp in enumerate(st.session_state.responses):
             with st.expander(f"Response #{i+1}: {resp['email']['subject']}", expanded=False):
                 col_left, col_right = st.columns([1, 1])
                 
                 with col_left:
-                    st.subheader("📩 Original Email")
+                    st.subheader("Original Email")
                     st.write(f"**From:** {resp['email']['sender']}")
                     st.write(f"**Subject:** {resp['email']['subject']}")
                     st.write(f"**Date:** {resp['email']['date']}")
@@ -380,7 +400,7 @@ Generated on: {resp['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}
                     st.text_area("", resp['email']['body'], height=200, key=f"orig_{i}", disabled=True)
                 
                 with col_right:
-                    st.subheader("🤖 Generated Response")
+                    st.subheader("Generated Response")
                     if resp['error']:
                         st.error(f"Error: {resp['error']}")
                     
@@ -406,7 +426,7 @@ Generated on: {resp['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}
 """
                     
                     st.download_button(
-                        label="📥 Download This Response",
+                        label="Download This Response",
                         data=response_content,
                         file_name=f"response_{i+1}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
                         mime="text/plain",
@@ -418,8 +438,8 @@ Generated on: {resp['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}
     st.markdown("""
     <div style='text-align: center; color: gray;'>
         <p>AI Email Responder powered by Gemini 2.0 | Built with Streamlit</p>
-        <p><small>⚠️ Always review AI-generated responses before sending</small></p>
-        <p><small>🔒 This app does not store any credentials or personal data</small></p>
+        <p><small>Always review AI-generated responses before sending</small></p>
+        <p><small>This app does not store any credentials or personal data</small></p>
     </div>
     """, unsafe_allow_html=True)
 
